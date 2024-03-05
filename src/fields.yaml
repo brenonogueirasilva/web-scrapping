@@ -1,0 +1,16 @@
+text1 : '//*[@id="site-content"]/div/div[1]/div[1]/div[1]/div/div/div/div/div/section/div/div[1]/span/h1'
+text2 : '//*[@id="site-content"]/div/div[1]/div[3]/div/div[1]/div/div[1]/div/div/div/section/div[1]/h1'
+owner : '//div[contains(text(), "Anfitri")]'
+taxa_servico : '//div[contains(text(), "Taxa de servi")]/../../../..'
+desconto : '//div[contains(text(), "Desconto")]/../..'
+taxa_limpeza : '//div[contains(text(), "Taxa de limpeza")]/../../../..'
+total : '//div[contains(text(), "Total (sem impostos)")]/../../..'
+nota_local1 : '//*[@id="site-content"]/div/div[1]/div[3]/div/div[1]/div/div[1]/div/div/div/section/div[3]/div[2]'
+nota_local2 : '//*[@id="site-content"]/div/div[1]/div[3]/div/div[1]/div/div[2]/div/div/div/a/div/div[2]/div[1]'
+qtde_comentarios_local1 : '//*[@id="site-content"]/div/div[1]/div[3]/div/div[1]/div/div[1]/div/div/div/section/div[3]/a' 
+qtde_comentarios_local2 : '//*[@id="site-content"]/div/div[1]/div[3]/div/div[1]/div/div[2]/div/div/div/a/div/div[4]/div[1]'
+
+#Xpath above is not ussed
+wait_fields : ['text1', 'text2', 'owner']
+session_amenities : '/html/body/div[9]/div/div/section/div/div/div[2]/div/div[3]/div/div/div/section'
+

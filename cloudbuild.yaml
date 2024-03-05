@@ -1,0 +1,10 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/enduring-branch-413218/web-scrap/web-scrap-image', '.']
+  # Push the Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/enduring-branch-413218/web-scrap/web-scrap-image']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
