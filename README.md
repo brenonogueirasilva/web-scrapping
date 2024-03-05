@@ -1,4 +1,4 @@
-# Projeto de Engenharia de Dados: WebScrapping
+# Projeto de Engenharia de Dados: WebScraping
 
 ## Introdução
 
@@ -15,7 +15,7 @@ Este projeto tem como objetivo realizar web scraping do site do Airbnb, coletand
 - **Selenium:** biblioteca do python que permite interagir com o site e realizar a raspagem.
 - **GitHub:** Repositório responsável pelo versionamento do codigo, sendo também o gatilho do Cloud Build sempre que sofrer novas alterações. 
 - **Cloud Storage:** Um ambiente na nuvem que permitirá armazenar os arquivos parquet que são o resultado da raspagem.
-- **Big Query:** Um sistema de armazenamento na nuvem no qual será consumido os dados de resultado do webscrapping.
+- **Big Query:** Um sistema de armazenamento na nuvem no qual será consumido os dados de resultado do webscraping.
 
 <p align="left">
 <img src="/img/artifact-registry.png" alt="artifact-registry" height="50" /> 
