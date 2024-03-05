@@ -1,0 +1,20 @@
+{
+    "text1" : "string",
+    "text2" : "string",
+    "owner" : "string",
+    "taxa_servico" : "float64",
+    "desconto" : "float64",
+    "taxa_limpeza" : "float64",
+    "total" : "float64",
+    "link" : "string", 
+    "nota" : "float64",
+    "comentario" : "float64",
+    "location" : "string",
+    "date_start" : "datetime64[ns]",
+    "date_end" : "datetime64[ns]",
+    "adults" : "float64",
+    "children" : "float64",
+    "infants" : "float64",
+    "pets" : "float64",
+    "diaria" : "float64" 
+}
