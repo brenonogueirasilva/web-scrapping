@@ -1,74 +1,81 @@
-# Projeto de Engenharia de Dados: Versionamento de Tabelas com Streaming de Dados usando Dataflow 
+# Projeto de Engenharia de Dados: WebScrapping
 
 ## Introdução
 
-Dentro do meu ambiente de trabalho, nos deparamos com tabelas em bancos transacionais que passam por edições e exclusões físicas de registros, resultando na impossibilidade de consultar seus históricos, sendo possível apenas visualizar o seu estado atual. 
+Dentro do ambiente de trabalho de um engenheiro de dados, podem existir situações nas quais se torna necessário realizar a coleta de dados de algum site ou aplicação, na qual não é possível utilizar uma API ou ter acesso direto ao banco de dados. Nessas circunstâncias, recorre-se ao web scraping. 
 
-Este projeto tem como objetivo desenvolver uma pipeline capaz de versionar os registros dessas tabelas, criando um histórico acessível em tempo real para a área de negócios. Para lidar com os dados em tempo real, optamos pelo uso de tecnologia de streaming, especificamente o Apache Beam, executado no ambiente em nuvem da Google (GCP) por meio de um job no Dataflow. Além disso, para capturar as alterações nos registros do banco, utilizaremos um serviço de Captura de Dados Alterados (CDC) gerenciado no GCP chamado Datastream. 
+Este projeto tem como objetivo realizar web scraping do site do Airbnb, coletando dados sobre imóveis em uma determinada localidade e período de tempo específico. O processo de scraping será conduzido no ambiente de nuvem do Google Cloud Platform (GCP), executado em uma máquina virtual. 
 
 ## Tecnologias Utilizadas
 
-- **MySql:** banco de dados relacional no qual está armazenado as tabelas que serão versionadas. 
-- **CloudSql:** serviço gerenciado de banco de dados relacional na Cloud do Google utilizado para o Mysql. 
-- **Data Stream:** serviço gerenciado que irá capturar os dados alterados (CDC) no banco MySql.
-- **Cloud Data Storage:** modelo de armazenamento de objetos que será utilizado para armazenar logs e scripts necessarios para o projeto.
-- **Pub Sub:** serviço de mensageria, capaz de notificar o recebimento de novos logs de alterações de registos das tabelas.
-- **Data Flow:** serviço gerenciado de execução de scripts stream ou lote.
-- **Apache Beam:** framework utilizado para o desenvolvimento de pipelines ETL’s em stream e lote.
-- **BigQuery:** Um sistema de armazenamento na nuvem no qual será armazenada a tabela final com os dados versionados.
-- **Clound Build:** Servico que possibilita implementar o deploy automatico da infraestrutura na nuvem, funcionando de forma integrado ao GitHub.
+- **Artifact Registry:** repositório de imagens do docker.
+- **Cloud Build:** Servico que possibilita implementar o deploy automatico da infraestrutura na nuvem, funcionando de forma integrado ao GitHub. 
+- **Docker:** Utilizado para criar a imagem contendo o código da aplicação. 
+- **Terraform:** Ferramenta que permite o provisionamento eficiente de toda a infraestrutura necessária, seguindo a metodologia de Infraestrutura como Código (IaC). 
+- **Selenium:** biblioteca do python que permite interagir com o site e realizar a raspagem.
 - **GitHub:** Repositório responsável pelo versionamento do codigo, sendo também o gatilho do Cloud Build sempre que sofrer novas alterações. 
-- **Terraform:** Ferramenta que permite o provisionamento eficiente de toda a infraestrutura necessária, seguindo a metodologia de Infraestrutura como Código (IaC).
-- **Docker:** Utilizado para criar imagens que servirá como base do template que será utilizado no dataflow.
+- **Cloud Storage:** Um ambiente na nuvem que permitirá armazenar os arquivos parquet que são o resultado da raspagem.
+- **Big Query:** Um sistema de armazenamento na nuvem no qual será consumido os dados de resultado do webscrapping.
+
+<p align="left">
+<img src="/img/artifact-registry.png" alt="artifact-registry" height="50" /> 
+<img src="/img/cloud_build.png" alt="cloud_build" height="50" />
+<img src="/img/docker-logo.png" alt="docker" height="50" /> 
+<img src="/img/terraform.png" alt="terraform.pn" height="50" />
+<img src="/img/Selenium_logo.svg.png" alt="Selenium_logo" height="50" />
+<img src="/img/git_hub.jpg" alt="git_hub" height="50" />
+<img src="/img/cloud storage.png" alt="cloud storage" height="50" />
+<img src="/img/google-bigquery-logo-1.jpg" alt="big_query" height="50" />    
+</p>
 
 ## Arquitetura
 
-![Diagrama de Arquitetura](inserir-link-para-imagem)
+![Diagrama de Arquitetura](img/arquitetura_web_scrapping.png)
 
 ## Etapas do Projeto
 
-O provisionamento da infraestrutura é conduzido através do Terraform, sendo organizado em três pastas distintas. A primeira pasta, denominada "cloudsql" (link), é utilizada para a configuração inicial do banco de dados, criando a instância necessária. A segunda, chamada "stream" (link), abrange a provisão completa da infraestrutura do projeto, desde a criação do script até a configuração do Datastream. Por fim, a última pasta, chamada "trigger" (link), é responsável por configurar uma trigger no Cloud Build associada a um repositório. Dessa forma, sempre que uma mudança é realizada no script ou na infraestrutura, basta fazer um commit no Git para que o deploy seja automaticamente acionado. 
+### 1. Desenvolvimento do Código para Web Scrapping: 
 
-### 1. Configuração do banco de Dados
+A primeira etapa do projeto consiste em desenvolver um código capaz de realizar o web scraping do site do Airbnb, para isso será utilizado a linguagem de programação python, amplamente utilizada na engenharia de dados. Para a realização da raspagem do site, é necessário realizar algumas interações, como clicar em alguns links e rolar a página, para isso será utilizado a biblioteca selenium.
 
-Como etapa inicial, é necessário ter um banco de dados devidamente configurado, pois este será a fonte de onde geraremos as tabelas versionadas. No contexto deste projeto, optamos por utilizar um banco de dados MySQL hospedado no CloudSql do GCP. Embora seja possível utilizar outros Sistemas Gerenciadores de Bancos de Dados (SGBD), alguns ajustes na configuração da conexão no Datastream são necessários. Para provisionar o banco de dados, utilizamos um script em Terraform (link), que cria a instância do banco de dados MySQL, configura um usuário para consultas e ajusta algumas flags para ativar os logs binários do banco. Essa ativação é crucial para que o serviço de CDC possa identificar as mudanças nas tabelas. 
+Para localizar os elementos HTML, será utilizado caminhos XPath das divs. Esses caminhos serão armazenados em um arquivo YAML externo para facilitar atualizações futuras, sem a necessidade de modificar o código diretamente, visto ser comum ocorrem atualizações na aplicação web, modificando os caminhos anteriores.
 
-### 2. Criação do Bucket e Tópico no Pub/Sub 
+O resultado do scrapping é uma tabela anúncios com uma listagem de imoveis do airbnb contendo informação de notas, valores, quantidade de comentários e etc, junto da tabela acomodações que armazena os beneficios que aquele imovel pode apresentar. Todas as tabelas são salvas no cloud storage com o formato parquet, visto sua alta capacidade de compressão.
 
-Posteriormente, é necessário criar um bucket para receber todos os logs com informações de alteração das tabelas desejadas. Após a criação do bucket, é essencial também criar um tópico no Pub/Sub, atuando como uma fila de mensagens que gera uma notificação sempre que um novo log ou objeto é inserido no bucket. Para que o Cloud Storage funcione como um publicador do Pub/Sub, é necessário configurar uma flag no bucket, o que também é feito usando o Terraform. 
+### 2. Criação do Dockerfile
 
-### 3. Criação do Script no Apache Beam
+Com o código da aplicação funcionando, é preciso dockerizá-lo para evitar problemas de dependências ao executá-lo em uma máquina virtual. Para isso, criaremos um arquivo Dockerfile {colocar link do arquivo} que utilize uma imagem base Python, juntamente com um arquivo de requisitos contendo todas as bibliotecas e suas respectivas versões. 
 
-Em seguida, configuramos um script capaz de lidar com streaming de dados, funcionando como um assinante do tópico do Pub/Sub criado anteriormente. Esse script recebe uma nova notificação sempre que um novo objeto é adicionado ao Cloud Storage. Ele lê essa notificação, que contém o caminho do novo objeto, e, posteriormente, lê o próprio log. O log inclui informações sobre a ação no banco (inserção, exclusão ou atualização), os detalhes da linha e quando a ação ocorreu. 
+### 3. Provisionamento da infraestrutura da VM usando Terraform
 
-O script processa esse log e escreve o resultado da alteração em uma linha de uma tabela no BigQuery. Registrando todos os eventos do banco, o script possibilita o versionamento completo dos registros da tabela. No caso de uma deleção, por exemplo, é inserida uma nova linha em branco indicando que o registro foi deletado fisicamente. Através do ID da linha e da data de alteração, a presença ou ausência na consulta depende do momento em que a informação é buscada. Todo o script é desenvolvido usando o Apache Beam (link), um framework capaz de trabalhar tanto em lote quanto em streaming. O executor desta rotina na nuvem é o Dataflow. 
+Com a imagem Docker configurada, é hora de provisionar a máquina virtual capaz de executar o código da aplicação, utilizando Terraform para realizar esse provisionamento. Basicamente, é criado uma máquina virtual no GCP que, ao ser iniciada, executará alguns comandos para instalar o Docker, permitindo eventualmente a execução do container com o código da aplicação. Esse provisionamento é realizado manualmente, uma única vez, por meio do Terraform, não sendo necessário recriar a máquina virtual em caso de mudanças no código. 
 
-Geralmente, o Dataflow possui alguns templates prontos. No entanto, como é necessário um script personalizado, é preciso criar um template próprio. Isso envolve a criação de uma imagem Docker com o código desejado, além de um arquivo JSON chamado "metadados" (link), que contém todos os parâmetros do script. A partir desses dois elementos, um template flex é gerado, utilizado para criar o job no Dataflow. A criação do template é feita por meio de comandos gcloud, executados por uma trigger do Cloud Build (a ser discutida posteriormente). Não foi possível utilizar o Terraform para esta etapa, pois a criação do template ainda não possui suporte dentro do Terraform. Posteriormente, a criação e ativação do job no Dataflow, com base no template criado anteriormente, são realizadas usando o Terraform. 
+### 4. Cloud Build
 
-### 4. Configuração do Datastream
+Embora a máquina virtual seja provisionada apenas uma vez, a imagem do container precisa ser atualizada sempre que houver mudanças no código. Para isso, cria-se um repositório no GitHub contendo o código da aplicação e configura-se uma trigger no Cloud Build. Sempre que houver um commit na branch main, comandos no cloudbuild.yaml serão executados para montar a imagem Docker a partir do Dockerfile e enviá-la para o Artifact Registry (repositório de imagens docker do GCP). A VM usará sempre a última versão da imagem, garantindo a execução do código mais recente. 
 
-Com o banco de dados em funcionamento, seus logs binários ativados e o job do Dataflow já operacional, é hora de configurar o Datastream. Este serviço gerenciado é responsável por enviar os logs de alterações de registro para o bucket criado anteriormente. A configuração do Datastream é a última etapa, garantindo que os logs iniciais não sejam perdidos até o início do funcionamento do script no Dataflow. 
+### 5. Executando a aplicação
 
-Para iniciar a configuração do Dataflow, serviço gerenciado de captura de alterações (CDC) de banco do GCP, lemos os logs binários do banco de dados e identificamos qualquer tipo de alteração em suas tabelas, desde deleção, edição até inserção. Como etapa inicial da configuração, é necessário criar uma conexão com o MySQL, além de criar um usuário para o Dataflow (este usuário já foi criado através do Terraform na etapa anterior 1 ???????????????????????ww). Por fim, é necessário definir onde o Dataflow armazenará as alterações, seja no BigQuery ou no Cloud Storage. O problema da primeira opção é que o resultado é uma tabela igual à tabela de origem. Em casos de edição do registro, teremos apenas o último registro, o que não atende ao projeto, pois o objetivo é capturar o histórico completo. Para isso, usamos o Cloud Storage, pois nele teremos todos os logs, sendo possível processá-los e armazenar no BigQuery todos os registros versionados. Toda essa configuração é feita usando o Terraform (link). 
+Com a máquina virtual provisionada e o Cloud Build configurado, basta conectar à instância via SSH e executar o comando docker run com os parâmetros de localidade e datas para realizar o scraping. Como o scraping pode ser executado em qualquer cidade e data, não há necessidade de programar sua execução periodicamente, sendo uma atividade esporádica, sob demanda. 
 
-### 5. Criação da Trigger do Cloud Build
+### 6. Executando a aplicação
 
-Basicamente, todas as etapas mencionadas da etapa 2 até 4 são realizadas por meio de um único script do Terraform. A função agora é configurar uma trigger usando o Cloud Build. Assim, sempre que houver uma alteração no script, na infraestrutura do projeto ou na inclusão de novas tabelas no CDC, basta realizar um novo commit no repositório configurado, e um deploy automático de toda a infraestrutura será acionado, seguindo as boas práticas de CI e CD. 
+Toda vez que a aplicação é executado ela salva o retorno do scrapping em um bucket do Cloud Storage, para ao consumo deste dados é possível criar uma tabela externa no Big Query, que permite realizar consultas dentro do Big Query diretamente no Cloud Storage.
 
 ## Pré-Requisitos
 
-Antes de prosseguir com este projeto, é necessário ter o Docker Desktop instalado em sua máquina local.
+Para execução do codigo é necessário possuir terraform instalado na máquina local, uma conta no GCP com criação de um usuário de serviço com acesso a todos os servicos mencionados no projeto.
 
 ## Executando o Projeto
 
-Para execução do codigo é necessário possuir terraform instalado na máquina local, uma conta no GCP com criação de um usuário de serviço com acesso a todos os servicos mencionados no projeto. 
-Executando o Projeto
 Copie o diretório do projeto para uma pasta local em seu computador.
-    1. Abra o terminal do seu computador e mova até o diretório do projeto.
-    2. Crie uma conta de servico no GCP com a credencias a todos os serviços mencionados, baixe uma chave em um arquivo json e coloque o arquivo no diretório raiz com nome creds_terraform.json
-    3. Mova para  pasta cloudsql e execute os comandos: terraform init, terraform plan, terraform apply
-    4. Crie um arquivo json github_token.json, e crie uma chave github_token com o respectivo token da sua conta do github.
-    5. Vá ao arquivo variaveis do terraform e subsitua pelos seu respectivo valores
-    6. Crie um repositorio no git hub e suba todo o codigo pro projeto
-    7. Mova para  pasta trigger e execute os comandos: terraform init, terraform plan, terraform apply ,sempre que for feito um novo commit a infraestrutura sera executada.
+1. Abra o terminal do seu computador e mova até o diretório do projeto.
+2. Crie uma conta de servico no GCP com a credencias a todos os serviços mencionados, baixe uma chave em um arquivo json e coloque o arquivo no diretório build com nome gcp_account.json
+3.  Mova para pasta /build/virtual_machine e execute os comandos: `terraform init`, `terraform plan`, `terraform apply`.
+4. Crie um arquivo json github_token.json, e crie uma chave github_token com o respectivo token da sua conta do github.
+5. Vá ao arquivo variaveis do terraform e subsitua pelos seu respectivo valores.
+6. Crie um repositorio no git hub e suba todo o codigo do projeto.
+7. Mova para pasta /build/trigger e execute os comandos: `terraform init`, `terraform plan`, `terraform apply`, sempre que for feito um novo commit a infraestrutura sera executada.
+8. Entre por SSH na máquina virtual e execute o scrapping utilizando o `docker run us-central1-docker.pkg.dev/enduring-branch-413218/web-scrap/web-scrap-image  -- localização –data_inicio –data_fim –qtde_adultos –qtde_criancas –qtde_bebes --qtde_pets`
+
 
